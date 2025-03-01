@@ -1,12 +1,11 @@
-import express from 'express';
 import {ProjectModel} from '../Models/Projects.model.js';  
-import mongoose from 'mongoose';
 
-const router = express.Router();
-router.post('/projects', async (req, res) => {
+
+export const createProject = async (req, res) => {
   try {
+    console.log('Request Body:', req.body); //debugging
     const { projectName, description, members, projectTags, projectLink, projectRepo, projectStatus, progress, projectLead, deadline } = req.body;
-    console.log(projectName)
+    
     const newProject = new ProjectModel({
       projectName,
       description,
@@ -19,7 +18,7 @@ router.post('/projects', async (req, res) => {
       projectLead,
       deadline,
     });
-
+    
     await newProject.save();
 
     res.status(201).json({
@@ -31,8 +30,10 @@ router.post('/projects', async (req, res) => {
     console.error(error);
     res.status(500).json({ success: false, message: 'Error creating project' });
   }
-});
-router.get('/projects', async (req, res) => {
+};
+
+
+export const getAllProjects = async (req, res) => {
   try {
     const projects = await ProjectModel.find().populate('members', 'name email'); 
     res.status(200).json({ success: true, data: projects });
@@ -40,9 +41,9 @@ router.get('/projects', async (req, res) => {
     console.error(error);
     res.status(500).json({ success: false, message: 'Error fetching projects' });
   }
-});
+};
 
-router.get('/projects/:id', async (req, res) => {
+export const getProjectById = async (req, res) => {
   const { id } = req.params;
   try {
     const project = await ProjectModel.findById(id).populate('members', 'name email');
@@ -54,8 +55,9 @@ router.get('/projects/:id', async (req, res) => {
     console.error(error);
     res.status(500).json({ success: false, message: 'Error fetching project' });
   }
-});
-router.put('/projects/:id', async (req, res) => {
+};
+
+export const updateProject = async (req, res) => {
   const { id } = req.params;
   try {
     const updatedProject = await ProjectModel.findByIdAndUpdate(id, req.body, { new: true });
@@ -71,8 +73,9 @@ router.put('/projects/:id', async (req, res) => {
     console.error(error);
     res.status(500).json({ success: false, message: 'Error updating project' });
   }
-});
-router.delete('/projects/:id', async (req, res) => {
+};
+
+export const deleteProject = async (req, res) => {
   const { id } = req.params;
   try {
     const deletedProject = await ProjectModel.findByIdAndDelete(id);
@@ -87,6 +90,4 @@ router.delete('/projects/:id', async (req, res) => {
     console.error(error);
     res.status(500).json({ success: false, message: 'Error deleting project' });
   }
-});
-
-export default router;
+};
