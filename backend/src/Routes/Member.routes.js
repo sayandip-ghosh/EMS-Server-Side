@@ -1,5 +1,6 @@
 import express from 'express';
 import {
+    loginUser,
     createMember,
     getAllMembers,
     getMemberById,
@@ -8,6 +9,9 @@ import {
 } from '../controllers/Member.controller.js';
 
 const router = express.Router();
+
+// Login a user
+router.post('/login', loginUser);
 
 // Create a new member
 router.post('/', createMember);

@@ -4,7 +4,7 @@ import bodyParser from 'body-parser';
 import authRouter from './src/Routes/AuthRoutes.js';
 import connectDB from './src/Models/db.js';
 import projectRouter from './src/Routes/ProjectRoutes.js'; 
-import userRouter from './src/Routes/User.routes.js';
+//import userRouter from './src/Routes/User.routes.js';
 import memberRouter from './src/Routes/Member.routes.js';
 import eventRouter from './src/Routes/Event.routes.js';
 import domainRouter from './src/Routes/Domain.routes.js';
@@ -32,9 +32,9 @@ connectDB()
     console.log('Connection failed',error);
 })
 
-app.use('/auth',authRouter)
+//app.use('/auth',memberRouter)
 app.use('/api', projectRouter);
-app.use('/api/users', userRouter);
+//app.use('/api/users', userRouter);
 app.use('/api/members', memberRouter);
 app.use('/api/events', eventRouter);
 app.use('/api/domains', domainRouter);
