@@ -1,47 +1,53 @@
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
-const ProjectSchema = new mongoose.Schema({
-    projectName:{
-        type: String,
-        required: true,
+const ProjectSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
     },
-    description:{
-        type: String,
+    description: {
+      type: String,
     },
-    members:[{  
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-    }],
-    projectTags:[{
-        type:String,
-        // enum : [ ''],
-        // default : '',
-    }],
-    projectLink:{
-        type: String,
+    status: {
+      type: String,
+      default: 'ongoing',
+      enum: ['ongoing', 'completed'],
     },
-    projectRepo:{
-        type: String,
+    progress: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
     },
-    projectStatus:{
-        type: String,
-        default: 'ongoing',
-        enum: [ 'ongoing','completed'],
+    deadline: {
+      type: String, // Consider using `Date` type if handling actual dates
     },
-    progress:{
-        type: Number, 
-        default: 0,
-    },
-    projectLead:[{
-        type:String,
-    }],
-    deadline:{
-        type:String,
-    },
-        
-    }
+    team: [
+      {
+        id: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Member',
+          required: true,
+        },
+        name: {
+          type: String,
+          required: true,
+        },
+        assign: {
+          type: String,
+          required: true,
+        },
+        githubLink: {
+          type: String,
+        },
+        deploymentLink: {
+          type: String,
+        },
+      },
+    ],
+  },
+  { timestamps: true }
+);
 
-,{timestamps: true})
-
-export const ProjectModel = mongoose.model('Project',ProjectSchema)
+export const ProjectModel = mongoose.model('Project', ProjectSchema);
