@@ -1,24 +1,22 @@
-import {ProjectModel} from '../Models/Projects.model.js';  
+import { ProjectModel } from '../Models/Projects.model.js';
 
-
+// Create a new project
 export const createProject = async (req, res) => {
   try {
-    console.log('Request Body:', req.body); //debugging
-    const { projectName, description, members, projectTags, projectLink, projectRepo, projectStatus, progress, projectLead, deadline } = req.body;
-    
+    console.log('Request Body:', req.body); // Debugging log
+
+    const { name, status, progress, deadline, team, githubLink, deploymentLink } = req.body;
+
     const newProject = new ProjectModel({
-      projectName,
-      description,
-      members,
-      projectTags,
-      projectLink,
-      projectRepo,
-      projectStatus,
+      name,
+      status,
       progress,
-      projectLead,
       deadline,
+      team,
+      githubLink,
+      deploymentLink,
     });
-    
+
     await newProject.save();
 
     res.status(201).json({
@@ -32,10 +30,10 @@ export const createProject = async (req, res) => {
   }
 };
 
-
+// Get all projects
 export const getAllProjects = async (req, res) => {
   try {
-    const projects = await ProjectModel.find().populate('members', 'name email'); 
+    const projects = await ProjectModel.find().populate('team.id', 'name email');
     res.status(200).json({ success: true, data: projects });
   } catch (error) {
     console.error(error);
@@ -43,10 +41,23 @@ export const getAllProjects = async (req, res) => {
   }
 };
 
+// Get projects for a specific member
+export const getProjectsForMember = async (req, res) => {
+  const { memberId } = req.params;
+  try {
+    const projects = await ProjectModel.find({ 'team.id': memberId }).populate('team.id', 'name email');
+    res.status(200).json({ success: true, data: projects });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error fetching projects for member' });
+  }
+};
+
+// Get a single project by ID
 export const getProjectById = async (req, res) => {
   const { id } = req.params;
   try {
-    const project = await ProjectModel.findById(id).populate('members', 'name email');
+    const project = await ProjectModel.findById(id).populate('team.id', 'name email');
     if (!project) {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
@@ -57,10 +68,11 @@ export const getProjectById = async (req, res) => {
   }
 };
 
+// Update an existing project
 export const updateProject = async (req, res) => {
   const { id } = req.params;
   try {
-    const updatedProject = await ProjectModel.findByIdAndUpdate(id, req.body, { new: true });
+    const updatedProject = await ProjectModel.findByIdAndUpdate(id, req.body, { new: true }).populate('team.id', 'name email');
     if (!updatedProject) {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
@@ -75,6 +87,7 @@ export const updateProject = async (req, res) => {
   }
 };
 
+// Delete a project
 export const deleteProject = async (req, res) => {
   const { id } = req.params;
   try {

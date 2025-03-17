@@ -3,71 +3,91 @@ import { EventModel } from '../Models/Event.model.js';
 // Create a new event
 export const createEvent = async (req, res) => {
     try {
-        const { eventName, date, time, venue, description, members, attendance } = req.body;
-        const newEvent = new EventModel({ eventName, date, time, venue, description, members, attendance });
-        const savedEvent = await newEvent.save();
-        res.status(201).json(savedEvent);
+        console.log('Request Body:', req.body); // Debugging log
+
+        const { name, date, time, location, organizingTeam } = req.body;
+
+        const newEvent = new EventModel({
+            name,
+            date,
+            time,
+            location,
+            organizingTeam
+        });
+
+        await newEvent.save();
+
+        res.status(201).json({
+            success: true,
+            message: 'Event created successfully',
+            data: newEvent,
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Error creating event' });
     }
 };
 
 // Get all events
 export const getAllEvents = async (req, res) => {
     try {
-        const events = await EventModel.find()
-            .populate('members')
-            .populate('attendance');
-        res.status(200).json(events);
+        const events = await EventModel.find().populate('organizingTeam.memberId', 'name email'); // Populate team members
+        res.status(200).json({ success: true, data: events });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Error fetching events' });
     }
 };
 
 // Get a single event by ID
 export const getEventById = async (req, res) => {
+    const { id } = req.params;
     try {
-        const event = await EventModel.findById(req.params.id)
-            .populate('members')
-            .populate('attendance');
+        const event = await EventModel.findById(id).populate('organizingTeam.memberId', 'name email');
         if (!event) {
-            return res.status(404).json({ message: 'Event not found' });
+            return res.status(404).json({ success: false, message: 'Event not found' });
         }
-        res.status(200).json(event);
+        res.status(200).json({ success: true, data: event });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Error fetching event' });
     }
 };
 
-// Update an event by ID
+// Update an existing event
 export const updateEvent = async (req, res) => {
+    const { id } = req.params;
     try {
-        const { eventName, date, time, venue, description, members, attendance } = req.body;
-        const updatedEvent = await EventModel.findByIdAndUpdate(
-            req.params.id,
-            { eventName, date, time, venue, description, members, attendance },
-            { new: true }
-        )
-            .populate('members')
-            .populate('attendance');
+        const updatedEvent = await EventModel.findByIdAndUpdate(id, req.body, { new: true })
+            .populate('organizingTeam.memberId', 'name email');
         if (!updatedEvent) {
-            return res.status(404).json({ message: 'Event not found' });
+            return res.status(404).json({ success: false, message: 'Event not found' });
         }
-        res.status(200).json(updatedEvent);
+        res.status(200).json({
+            success: true,
+            message: 'Event updated successfully',
+            data: updatedEvent,
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Error updating event' });
     }
 };
 
-// Delete an event by ID
+// Delete an event
 export const deleteEvent = async (req, res) => {
+    const { id } = req.params;
     try {
-        const deletedEvent = await EventModel.findByIdAndDelete(req.params.id);
+        const deletedEvent = await EventModel.findByIdAndDelete(id);
         if (!deletedEvent) {
-            return res.status(404).json({ message: 'Event not found' });
+            return res.status(404).json({ success: false, message: 'Event not found' });
         }
-        res.status(200).json({ message: 'Event deleted successfully' });
+        res.status(200).json({
+            success: true,
+            message: 'Event deleted successfully',
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Error deleting event' });
     }
 };
