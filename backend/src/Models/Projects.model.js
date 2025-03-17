@@ -1,48 +1,53 @@
 import mongoose from 'mongoose';
 
-const ProjectSchema = new mongoose.Schema({
+const ProjectSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
+    },
+    description: {
+      type: String,
     },
     status: {
-        type: String,
+      type: String,
+      default: 'ongoing',
+      enum: ['ongoing', 'completed'],
     },
-    members:[{  
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
+    progress: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    deadline: {
+      type: String, // Consider using `Date` type if handling actual dates
     },
     team: [
-        {
-            id: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'Member',
-            },
-            name: {
-                type: String,
-                required: true,
-            },
-            assign: {
-                type: String,
-                required: true,
-            }
-        }
+      {
+        id: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Member',
+          required: true,
+        },
+        name: {
+          type: String,
+          required: true,
+        },
+        assign: {
+          type: String,
+          required: true,
+        },
+        githubLink: {
+          type: String,
+        },
+        deploymentLink: {
+          type: String,
+        },
+      },
     ],
-    githubLink: {
-        type: String,
-    },
-    deploymentLink: {
-        type: String,
-    }
-}, { timestamps: true });
-
-// Middleware to validate `progress` based on `status`
-ProjectSchema.pre('save', function (next) {
-    if (this.status === 'Completed' && this.progress < 100) {
-        this.progress = 100; // Auto-set progress to 100 for completed projects
-    }
-    next();
-});
+  },
+  { timestamps: true }
+);
 
 export const ProjectModel = mongoose.model('Project', ProjectSchema);
