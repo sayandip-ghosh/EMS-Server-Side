@@ -1,14 +1,35 @@
-import mongoose from  'mongoose'
+import mongoose from 'mongoose';
 
-const eventSchema = new mongoose.Schema({
-    eventName: String,
-    date: Date,
-    time: String,
-    venue: String,
-    description: String,
-    members: [{type: mongoose.Schema.Types.ObjectId, ref: 'Member'}],
-    attendance:[{type: mongoose.Schema.Types.ObjectId, ref:'Attendance'}]
+const EventSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+    },
+    date: {
+        type: Date,
+        required: true,
+    },
+    location: {
+        type: String,
+        required: true,
+    },
+    time: {
+        type: String,
+        required: true, // Example: "10 A.M. - 11 A.M."
+    },
+    organizingTeam: [
+        {
+            memberId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Member',
+                required: true,
+            },
+            assignment: {
+                type: String,
+                required: true, // Example: "Event Manager", "Lead Coordinator"
+            }
+        }
+    ]
+}, { timestamps: true });
 
-},{timestamp: true})
-
-export const EventModel = mongoose.model('Event', eventSchema)
+export const EventModel = mongoose.model('Event', EventSchema);
