@@ -1,50 +1,41 @@
 import { MemberModel } from "../Models/Member.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { uploadOnCloudinary } from "../Utils/cloudinary.js";
+import cloudinary from "cloudinary";
 
 // Login a user
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate input
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+      return res.status(400).json({ message: "Email and password are required" });
     }
 
-    // Check if user exists
     const user = await MemberModel.findOne({ email });
-    if (!user) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    // Validate password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(400).json({ message: "Invalid email or password" });
-    }
-
-    // Generate JWT token
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
-      }
+      { expiresIn: "1h" }
     );
 
-    res.status(200).json({ token, user: {
-      id: user._id,
-      username: user.username,
-      role: user.role,
-      email: user.email,
-      domain: user.domain,
-      avatarUrl: user.avatarUrl,
-  }, });
+    res.status(200).json({
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        role: user.role,
+        email: user.email,
+        domain: user.domain,
+        avatarUrl: user.avatarUrl,
+      },
+    });
   } catch (error) {
-    console.error("Error logging in user:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -63,14 +54,15 @@ export const createMember = async (req, res) => {
       yearOfPassing,
       stream,
       universityRollNumber,
-      avatarUrl,
       skills,
       events,
       projects,
       attendance,
     } = req.body;
 
-    // Encrypt the password
+    const avatarLocalPath = req.files?.avatar?.[0]?.path || "";
+    const avatar = avatarLocalPath ? (await uploadOnCloudinary(avatarLocalPath))?.url || "" : "";
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newMember = new MemberModel({
@@ -84,7 +76,7 @@ export const createMember = async (req, res) => {
       yearOfPassing,
       stream,
       universityRollNumber,
-      avatarUrl,
+      avatarUrl: avatar,
       skills,
       events,
       projects,
@@ -118,9 +110,11 @@ export const getMemberById = async (req, res) => {
       .populate("events")
       .populate("projects")
       .populate("attendance");
+
     if (!member) {
       return res.status(404).json({ message: "Member not found" });
     }
+
     res.status(200).json(member);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -131,34 +125,62 @@ export const getMemberById = async (req, res) => {
 export const updateMember = async (req, res) => {
   try {
     const {
+      username,
+      email,
+      password,
+      role,
       domain,
       socials,
       yearOfJoining,
       yearOfPassing,
       stream,
       universityRollNumber,
-      avatarUrl,
       skills,
       events,
       projects,
       attendance,
     } = req.body;
 
+    const updatedData = {
+      username,
+      email,
+      role,
+      domain,
+      socials,
+      yearOfJoining,
+      yearOfPassing,
+      stream,
+      universityRollNumber,
+      skills,
+      events,
+      projects,
+      attendance,
+    };
+
+    if (password) {
+      updatedData.password = await bcrypt.hash(password, 10);
+    }
+
+    // Handle avatar update
+    const avatarLocalPath = req.files?.avatar?.[0]?.path || "";
+
+if (avatarLocalPath) {
+  const member = await MemberModel.findById(req.params.id);
+
+  // Deleting old avatar from Cloudinary
+  if (member?.avatarUrl) {
+    const publicId = member.avatarUrl.split("/").pop().split(".")[0];
+    await cloudinary.uploader.destroy(publicId);
+  }
+
+  // Uploading new avatar
+  const cloudinaryResponse = await uploadOnCloudinary(avatarLocalPath);
+  updatedData.avatarUrl = cloudinaryResponse?.url || "";
+    }
+
     const updatedMember = await MemberModel.findByIdAndUpdate(
       req.params.id,
-      {
-        domain,
-        socials,
-        yearOfJoining,
-        yearOfPassing,
-        stream,
-        universityRollNumber,
-        avatarUrl,
-        skills,
-        events,
-        projects,
-        attendance,
-      },
+      updatedData,
       { new: true }
     )
       .populate("events")
@@ -168,6 +190,7 @@ export const updateMember = async (req, res) => {
     if (!updatedMember) {
       return res.status(404).json({ message: "Member not found" });
     }
+
     res.status(200).json(updatedMember);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -177,10 +200,18 @@ export const updateMember = async (req, res) => {
 // Delete a member by ID
 export const deleteMember = async (req, res) => {
   try {
-    const deletedMember = await MemberModel.findByIdAndDelete(req.params.id);
-    if (!deletedMember) {
+    const member = await MemberModel.findById(req.params.id);
+
+    if (!member) {
       return res.status(404).json({ message: "Member not found" });
     }
+
+    if (member.avatarUrl) {
+      const publicId = member.avatarUrl.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(publicId);
+    }
+
+    await MemberModel.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Member deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
