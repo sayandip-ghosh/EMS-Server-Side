@@ -1,11 +1,12 @@
-import { UserModel } from "../Models/User.model.js";
+//import { UserModel } from "../Models/User.model.js";
+import { MemberModel } from '../Models/Member.model.js';
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
 const signup = async (req, res) => {
     try {
         const {username, email, password}= req.body;
-        const existUser = await UserModel.findOne({email})
+        const existUser = await MemberModel.findOne({email})
         if(existUser){
             return res.status(402).json({success:false,message: 'User already exist'})
         }

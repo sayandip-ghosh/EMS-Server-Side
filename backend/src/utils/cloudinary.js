@@ -1,15 +1,24 @@
 import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
 
-(async function() {
-
-    // Configuration
-    cloudinary.config({ 
+const connectCloudinary = async function() {
+    const connection = cloudinary.config({ 
         cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
         api_key: process.env.CLOUDINARY_API_KEY, 
         api_secret: process.env.CLOUDINARY_API_SECRET
     });
-});
+    //console.log(connection);
+    // Configuration
+  
+};
+connectCloudinary().then(() => {
+    console.log("Cloudinary connected successfully");
+}
+).catch((error) => {
+    console.log("Cloudinary connection failed", error);
+}
+);
+
 
 const uploadOnCloudinary = async (localFilePath) => {
     try {
@@ -19,8 +28,8 @@ const uploadOnCloudinary = async (localFilePath) => {
             resource_type: "auto"
         })
         // file has been uploaded successfully
-        console.log("file is uploaded on cloudinary ", response.url);
-        //fs.unlinkSync(localFilePath)
+        //console.log("file is uploaded on cloudinary ", response.url);
+        fs.unlinkSync(localFilePath)
         return response;
 
     } catch (error) {
