@@ -1,47 +1,55 @@
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
 const ProjectSchema = new mongoose.Schema({
-    projectName:{
+    name: {
         type: String,
         required: true,
     },
-    description:{
+    status: {
         type: String,
+        default: 'Ongoing',
+        enum: ['Ongoing', 'Completed'],
     },
-    members:[{  
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-    }],
-    projectTags:[{
-        type:String,
-        // enum : [ ''],
-        // default : '',
-    }],
-    projectLink:{
-        type: String,
-    },
-    projectRepo:{
-        type: String,
-    },
-    projectStatus:{
-        type: String,
-        default: 'ongoing',
-        enum: [ 'ongoing','completed'],
-    },
-    progress:{
+    progress: {
         type: Number, 
         default: 0,
+        min: 0,
+        max: 100,
     },
-    projectLead:[{
-        type:String,
-    }],
-    deadline:{
-        type:String,
+    deadline: {
+        type: Date, 
+        required: true,
     },
-        
+    team: [
+        {
+            id: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Member',
+            },
+            name: {
+                type: String,
+                required: true,
+            },
+            assign: {
+                type: String,
+                required: true,
+            }
+        }
+    ],
+    githubLink: {
+        type: String,
+    },
+    deploymentLink: {
+        type: String,
     }
+}, { timestamps: true });
 
-,{timestamps: true})
+// Middleware to validate `progress` based on `status`
+ProjectSchema.pre('save', function (next) {
+    if (this.status === 'Completed' && this.progress < 100) {
+        this.progress = 100; // Auto-set progress to 100 for completed projects
+    }
+    next();
+});
 
-export const ProjectModel = mongoose.model('Project',ProjectSchema)
+export const ProjectModel = mongoose.model('Project', ProjectSchema);
