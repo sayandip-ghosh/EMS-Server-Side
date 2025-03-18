@@ -54,14 +54,22 @@ export const createMember = async (req, res) => {
       yearOfPassing,
       stream,
       universityRollNumber,
+      avatarUrl,
       skills,
       events,
       projects,
       attendance,
+       // Expecting Base64 string from frontend
     } = req.body;
 
-    const avatarLocalPath = req.files?.avatar?.[0]?.path || "";
-    const avatar = avatarLocalPath ? (await uploadOnCloudinary(avatarLocalPath))?.url || "" : "";
+    // Upload avatar to Cloudinary if provided
+    let avatar = "";
+    if (avatarUrl) {
+      const cloudinaryResponse = await uploadOnCloudinary(avatarUrl);
+      console.log("cloudinaryResponse", cloudinaryResponse);
+      
+      avatar = cloudinaryResponse?.url || "";
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -139,6 +147,7 @@ export const updateMember = async (req, res) => {
       events,
       projects,
       attendance,
+      avatarUrl, // Expecting Base64 string from frontend
     } = req.body;
 
     const updatedData = {
@@ -162,20 +171,18 @@ export const updateMember = async (req, res) => {
     }
 
     // Handle avatar update
-    const avatarLocalPath = req.files?.avatar?.[0]?.path || "";
+    if (avatarUrl) {
+      const member = await MemberModel.findById(req.params.id);
 
-if (avatarLocalPath) {
-  const member = await MemberModel.findById(req.params.id);
+      // Delete old avatar from Cloudinary
+      if (member?.avatarUrl) {
+        const publicId = member.avatarUrl.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(publicId);
+      }
 
-  // Deleting old avatar from Cloudinary
-  if (member?.avatarUrl) {
-    const publicId = member.avatarUrl.split("/").pop().split(".")[0];
-    await cloudinary.uploader.destroy(publicId);
-  }
-
-  // Uploading new avatar
-  const cloudinaryResponse = await uploadOnCloudinary(avatarLocalPath);
-  updatedData.avatarUrl = cloudinaryResponse?.url || "";
+      // Upload new avatar to Cloudinary
+      const cloudinaryResponse = await uploadOnCloudinary(avatarUrl);
+      updatedData.avatarUrl = cloudinaryResponse?.url || "";
     }
 
     const updatedMember = await MemberModel.findByIdAndUpdate(
