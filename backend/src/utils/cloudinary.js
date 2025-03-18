@@ -1,41 +1,39 @@
 import { v2 as cloudinary } from 'cloudinary';
-import fs from 'fs';
 
-const connectCloudinary = async function() {
-    const connection = cloudinary.config({ 
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
-        api_key: process.env.CLOUDINARY_API_KEY, 
-        api_secret: process.env.CLOUDINARY_API_SECRET
+const connectCloudinary = async function () {
+    const connection = cloudinary.config({
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET,
     });
-    //console.log(connection);
-    // Configuration
-  
+    console.log("Cloudinary configuration initialized");
 };
-connectCloudinary().then(() => {
-    console.log("Cloudinary connected successfully");
-}
-).catch((error) => {
-    console.log("Cloudinary connection failed", error);
-}
-);
 
+connectCloudinary()
+    .then(() => {
+        console.log("Cloudinary connected successfully");
+    })
+    .catch((error) => {
+        console.log("Cloudinary connection failed", error);
+    });
 
-const uploadOnCloudinary = async (localFilePath) => {
+const uploadOnCloudinary = async (base64String) => {
     try {
-        if (!localFilePath) return null;
-        //upload the file on cloudinary
-        const response = await cloudinary.uploader.upload(localFilePath, {
-            resource_type: "auto"
-        })
-        // file has been uploaded successfully
-        console.log("file is uploaded on cloudinary ", response.url);
-        fs.unlinkSync(localFilePath)
+        if (!base64String) return null;
+
+        // Upload the Base64 string to Cloudinary
+        const response = await cloudinary.uploader.upload(base64String, {
+            resource_type: "auto", // Automatically detect the file type
+        });
+
+        // File has been uploaded successfully
+        console.log("File uploaded to Cloudinary:", response.url);
         return response;
 
     } catch (error) {
-        fs.unlinkSync(localFilePath) // remove the locally saved temporary file as the upload operation got failed
+        console.error("Error uploading to Cloudinary:", error);
         return null;
     }
-}
+};
 
-export { uploadOnCloudinary }
+export { uploadOnCloudinary };
