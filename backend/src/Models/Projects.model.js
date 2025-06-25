@@ -21,7 +21,13 @@ const ProjectSchema = new mongoose.Schema(
       max: 100,
     },
     deadline: {
-      type: String, // Consider using `Date` type if handling actual dates
+      type: Date,
+    },
+    githubLink: {
+      type: String,
+    },
+    deploymentLink: {
+      type: String,
     },
     team: [
       {
@@ -30,21 +36,11 @@ const ProjectSchema = new mongoose.Schema(
           ref: 'Member',
           required: true,
         },
-        name: {
-          type: String,
-          required: true,
-        },
         assign: {
           type: String,
           required: true,
-        },
-        githubLink: {
-          type: String,
-        },
-        deploymentLink: {
-          type: String,
-        },
-      },
+        }
+      }
     ],
   },
   { timestamps: true }
