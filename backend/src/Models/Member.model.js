@@ -24,6 +24,7 @@ const memberSchema = new mongoose.Schema({
         linkedin: String,
         instagram: String,
         twitter: String,
+        github: String,
         //add kar lo aur chahiye to
     },
     yearOfJoining: Number,
